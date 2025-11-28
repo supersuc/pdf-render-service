@@ -1,0 +1,230 @@
+variables:
+  # gitlab runner内置参数请参考: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
+  PROJECT_NAME: ${CI_PROJECT_NAME}
+  PROJECT_GROUP: ${CI_PROJECT_NAMESPACE}
+  TARGET_GROUP: "faceid-front-house" # git组规范后废弃
+  # 配置中心
+  CENTER_CONFIG_URL: ${GITLAB_URL}/ftd-config/faceid.git
+  # 静态文件拉取配置
+  # STATIC_PROJECT_NAME: ${CI_PROJECT_NAME}
+  # STATIC_PATH: ${STATIC_URL}/ftd-builds
+  # STATIC_FILE_NAME: "dist.tar.gz"
+  # docker模板
+  DOCKER_TP: template-nodejs-sky # 引用模板名
+  DOCKER_TP_DEV: template-nodejs # 开发环境模板，不能使用skywalking
+  DOCKER_FROM: ${DOCKER_REGISTRY}/env/nodejs:v14-chromium # 容器基础镜像
+  PROJECT_PORT: "3000" # 替换服务启动端口
+  REPLICAS_DEV: 1 # 开发环境副本数
+  REPLICAS_TEST: 1 # 测试环境副本数
+  REPLICAS_PROD: 1 # 生产环境副本数
+  NAMESPACE: ${CI_PROJECT_NAMESPACE}
+
+# 定义CI阶段
+stages:
+  - sonar
+  - package
+  - deploy
+
+#代码检查
+sonar:default:
+  image: ${DOCKER_REGISTRY}/env/sonarscanner:v1.02
+  stage: sonar
+  script:
+    - /sonar-scanner/bin/sonar-scanner -Dsonar.projectKey=${PROJECT_GROUP}.${PROJECT_NAME}.${CI_COMMIT_REF_NAME} -Dsonar.sources=${CI_PROJECT_DIR} -Dsonar.projectName=${PROJECT_GROUP}.${PROJECT_NAME}.${CI_COMMIT_REF_NAME} -Dsonar.host.url=https://sonar.wangxiaobao.com -Dsonar.login=f6008364db3b52711b641ab87d7981445f760545 -Dsonar.gitlab.project_id=${CI_PROJECT_PATH} -Dsonar.gitlab.commit_sha=${CI_COMMIT_SHA} -Dsonar.gitlab.ref_name=${CI_COMMIT_REF_NAME}
+  except:
+    - test
+    - tags
+    - master
+sonar:test:
+  image: ${DOCKER_REGISTRY}/env/sonarscanner:v1.02
+  stage: sonar
+  script:
+    - /sonar-scanner/bin/sonar-scanner -Dsonar.projectKey=${PROJECT_GROUP}.${PROJECT_NAME}.test -Dsonar.sources=${CI_PROJECT_DIR} -Dsonar.projectName=${PROJECT_GROUP}.${PROJECT_NAME}.test -Dsonar.host.url=https://sonar.wangxiaobao.com -Dsonar.login=f6008364db3b52711b641ab87d7981445f760545 -Dsonar.gitlab.project_id=${CI_PROJECT_PATH} -Dsonar.gitlab.commit_sha=${CI_COMMIT_SHA} -Dsonar.gitlab.ref_name=${CI_COMMIT_REF_NAME} | tee log.txt
+  #   - grep -q 'desc=SonarQube reported QualityGate is ok' log.txt && exit 0 || exit -1
+  only:
+    - test
+# 开发环境
+#打镜像
+#job_package:devenv:
+#  image: ${DOCKER_REGISTRY}/env/dind:v1.15
+#  stage: package
+#  script:
+#    #docker模板拉取
+#    - mkdir /configuration
+#    - cd /configuration
+#    - git init
+#    - git remote add -f origin ${GITLAB_URL}/ops/configuration-center.git
+#    - git config core.sparsecheckout true
+#    - echo ${DOCKER_TP_DEV} >> .git/info/sparse-checkout
+#    - git pull origin master
+#    - cd -
+#    - cp -r /configuration/${DOCKER_TP_DEV} docker
+#    - sed -i -e 's#${DOCKER_FROM}#'$DOCKER_FROM'#g' docker/Dockerfile
+#    - sed -i -e 's#${CENTER_CONFIG_URL}#'$CENTER_CONFIG_URL'#g' -e 's#${PROJECT_NAME}#'$PROJECT_NAME'#g' docker/start.sh
+#    - pwd
+#    - PROJECT_NAME=${CI_PROJECT_NAME}
+#    #静态文件拉取配置
+#    #- wget ${STATIC_PATH}/develop/${STATIC_PROJECT_NAME}/${STATIC_FILE_NAME}
+#    #- rm -fr dist/
+#    #- tar -zxvf ${STATIC_FILE_NAME}
+#    #- rm -fr ${STATIC_FILE_NAME}
+#    #容器镜像打包
+#    - cp docker/* .
+#    - DOCKER_REPO=${DOCKER_REGISTRY}/${PROJECT_GROUP}/${PROJECT_NAME}:${CI_BUILD_REF_NAME}
+#    - docker build -t ${DOCKER_REPO} .
+#    - docker push ${DOCKER_REPO}
+#    - echo ${DOCKER_REPO}
+#  only:
+#    - develop
+#  artifacts:
+#    paths:
+#      - docker
+#
+#部署
+#job_deploy:devenv:
+#  image: ${DOCKER_REGISTRY}/env/kubectl:devenv
+#  stage: deploy
+#  variables:
+#    GIT_STRATEGY: none
+#    CURRENT_ENV: devenv,k8s
+#    APISIX_SUFFIX: "dev.wxb.com"
+#  script:
+#    - export PROJECT_VERSION=${CI_BUILD_REF_NAME}
+#    - DDATE=`date "+%Y_%m_%dT%H-%M-%SZ"`
+#    - PROJECT_COMMIT=${CI_COMMIT_SHA:0:8}
+#    - cd docker
+#    - sed -i -e 's#${CI_COMMIT_SHA}#'$PROJECT_COMMIT'#g' -e 's#${DDATE}#'$DDATE'#g' -e 's#${REPLICAS}#'$REPLICAS_DEV'#g' deployment.yaml
+#    - sed -i -e 's#${PROJECT_PORT}#'$PROJECT_PORT'#g' -e 's#${TARGET_GROUP}#'$TARGET_GROUP'#g' -e 's#${PROJECT_GROUP}#'$PROJECT_GROUP'#g' -e 's#${PROJECT_NAME}#'$PROJECT_NAME'#g' -e 's#${DOCKER_REGISTRY}#'$DOCKER_REGISTRY'#g' -e 's#${PROJECT_VERSION}#'$PROJECT_VERSION'#g' deployment.yaml
+#    - sed -i -e 's#${PROJECT_PORT}#'$PROJECT_PORT'#g' -e 's#${TARGET_GROUP}#'$TARGET_GROUP'#g' -e 's#${PROJECT_GROUP}#'$PROJECT_GROUP'#g' -e 's#${PROJECT_NAME}#'$PROJECT_NAME'#g' service.yaml
+#    - envsubst < ${TPL_ApisixRoute} > ApisixRoute.yaml
+#    - cat *.yaml | kubectl apply -f -
+#  only:
+#    - develop
+#  dependencies:
+#    - job_package:devenv
+
+# 测试环境
+#打镜像
+job_package:testenv:
+  image: ${DOCKER_REGISTRY}/env/dind:v1.15
+  stage: package
+  script:
+    #docker模板文件拉取
+    - mkdir /configuration
+    - cd /configuration
+    - git init
+    - git remote add -f origin ${GITLAB_URL}/ops/configuration-center.git
+    - git config core.sparsecheckout true
+    - echo ${DOCKER_TP} >> .git/info/sparse-checkout
+    - git pull origin master
+    - cd -
+    - cp -r /configuration/${DOCKER_TP} docker
+    - sed -i -e 's#${DOCKER_FROM}#'$DOCKER_FROM'#g' docker/Dockerfile
+    - sed -i -e 's#${CENTER_CONFIG_URL}#'$CENTER_CONFIG_URL'#g' -e 's#${PROJECT_NAME}#'$PROJECT_NAME'#g' docker/start.sh
+    - pwd
+    #静态文件拉取配置
+    # - wget ${STATIC_PATH}/test/${STATIC_PROJECT_NAME}/${STATIC_FILE_NAME}
+    # - rm -fr dist/
+    # - tar -zxvf ${STATIC_FILE_NAME}
+    # - rm -fr ${STATIC_FILE_NAME}
+    #容器镜像打包
+    - cp docker/* .
+    - DOCKER_REPO=${DOCKER_REGISTRY}/${PROJECT_GROUP}/${PROJECT_NAME}:${CI_BUILD_REF_NAME}
+    - docker build -t ${DOCKER_REPO} .
+    - docker push ${DOCKER_REPO}
+    - echo ${DOCKER_REPO}
+  rules:
+    - if: $CI_COMMIT_REF_NAME =~ /^test-.*$/
+      variables:
+        PROJECT_NAME: ${CI_PROJECT_NAME}-${CI_COMMIT_REF_NAME}
+        STATIC_FILE_NAME: "dist-${CI_COMMIT_REF_NAME}.tar.gz"
+    - if: $CI_COMMIT_REF_NAME == "test"
+  artifacts:
+    paths:
+      - docker
+
+#新测试部署
+job_deploy:testenv:
+  image: registry.wangxiaobao.com/platform/kubectl@sha256:2a6c959d1deee87cc504d835c9e49181726bb781fad31a81f7e63ced0d642ef2
+  stage: deploy
+  variables:
+    GIT_STRATEGY: none
+    CURRENT_ENV: testenv,k8s
+    APISIX_SUFFIX: "test.wxb.com"
+  script:
+    - export PROJECT_VERSION=${CI_BUILD_REF_NAME}
+    - DDATE=`date "+%Y_%m_%dT%H-%M-%SZ"`
+    - PROJECT_COMMIT=${CI_COMMIT_SHA:0:8}
+    - cd docker
+    - sed -i -e 's#${CI_COMMIT_SHA}#'$PROJECT_COMMIT'#g' -e 's#${DDATE}#'$DDATE'#g' -e 's#${REPLICAS}#'$REPLICAS_TEST'#g' deployment.yaml
+    - sed -i -e 's#${PROJECT_PORT}#'$PROJECT_PORT'#g' -e 's#${TARGET_GROUP}#'$TARGET_GROUP'#g' -e 's#${PROJECT_GROUP}#'$PROJECT_GROUP'#g' -e 's#${PROJECT_NAME}#'$PROJECT_NAME'#g' -e 's#${DOCKER_REGISTRY}#'$DOCKER_REGISTRY'#g' -e 's#${PROJECT_VERSION}#'$PROJECT_VERSION'#g' deployment.yaml
+    - sed -i -e 's#${PROJECT_PORT}#'$PROJECT_PORT'#g' -e 's#${TARGET_GROUP}#'$TARGET_GROUP'#g' -e 's#${PROJECT_GROUP}#'$PROJECT_GROUP'#g' -e 's#${PROJECT_NAME}#'$PROJECT_NAME'#g' service.yaml
+    - envsubst < ${TPL_ApisixRoute} > ApisixRoute.yaml
+    - cat *.yaml | kubectl --kubeconfig=$KUBE_CONFIG_TEST_ACK apply -f -
+  rules:
+    - if: $CI_COMMIT_REF_NAME =~ /^test-.*$/
+      variables:
+        PROJECT_NAME: ${CI_PROJECT_NAME}-${CI_COMMIT_REF_NAME}
+    - if: $CI_COMMIT_REF_NAME == "test"
+  dependencies:
+    - job_package:testenv
+
+# 正式环境
+#打镜像
+job_package:prodenv:
+  image: ${DOCKER_REGISTRY}/env/dind:v1.15
+  stage: package
+  script:
+    - mkdir /configuration
+    - cd /configuration
+    - git init
+    - git remote add -f origin ${GITLAB_URL}/ops/configuration-center.git
+    - git config core.sparsecheckout true
+    - echo ${DOCKER_TP} >> .git/info/sparse-checkout
+    - git pull origin master
+    - cd -
+    - cp -r /configuration/${DOCKER_TP} docker
+    - sed -i -e 's#${DOCKER_FROM}#'$DOCKER_FROM'#g' docker/Dockerfile
+    - sed -i -e 's#${CENTER_CONFIG_URL}#'$CENTER_CONFIG_URL'#g' -e 's#${PROJECT_NAME}#'$PROJECT_NAME'#g' docker/start.sh
+    - pwd
+    - PROJECT_NAME=${CI_PROJECT_NAME}
+    #静态文件拉取配置
+    # - wget ${STATIC_PATH}/prod/${STATIC_PROJECT_NAME}/${STATIC_FILE_NAME}
+    # - rm -fr dist/
+    # - tar -zxvf ${STATIC_FILE_NAME}
+    # - rm -fr ${STATIC_FILE_NAME}
+    #容器镜像打包
+    - cp docker/* .
+    - DOCKER_REPO=${DOCKER_REGISTRY}/${PROJECT_GROUP}/${PROJECT_NAME}:${CI_BUILD_REF_NAME}
+    - docker build -t ${DOCKER_REPO} .
+    - docker push ${DOCKER_REPO}
+    - echo ${DOCKER_REPO}
+  only:
+    - tags
+  artifacts:
+    paths:
+      - docker
+
+#部署
+job_deploy:prodenv:
+  image: registry.wangxiaobao.com/platform/kubectl@sha256:2a6c959d1deee87cc504d835c9e49181726bb781fad31a81f7e63ced0d642ef2
+  stage: deploy
+  variables:
+    GIT_STRATEGY: none
+    CURRENT_ENV: prodenv,k8s
+    APISIX_SUFFIX: "prod.wxb.com"
+  script:
+    - export PROJECT_VERSION=${CI_BUILD_REF_NAME}
+    - DDATE=`date "+%Y_%m_%dT%H-%M-%SZ"`
+    - PROJECT_COMMIT=${CI_COMMIT_SHA:0:8}
+    - cd docker
+    - sed -i -e 's#${CI_COMMIT_SHA}#'$PROJECT_COMMIT'#g' -e 's#${DDATE}#'$DDATE'#g' -e 's#${REPLICAS}#'$REPLICAS_PROD'#g' deployment.yaml
+    - sed -i -e 's#${PROJECT_PORT}#'$PROJECT_PORT'#g' -e 's#${TARGET_GROUP}#'$TARGET_GROUP'#g' -e 's#${PROJECT_GROUP}#'$PROJECT_GROUP'#g' -e 's#${PROJECT_NAME}#'$PROJECT_NAME'#g' -e 's#${DOCKER_REGISTRY}#'$DOCKER_REGISTRY'#g' -e 's#${PROJECT_VERSION}#'$PROJECT_VERSION'#g' deployment.yaml
+    - sed -i -e 's#${PROJECT_PORT}#'$PROJECT_PORT'#g' -e 's#${TARGET_GROUP}#'$TARGET_GROUP'#g' -e 's#${PROJECT_GROUP}#'$PROJECT_GROUP'#g' -e 's#${PROJECT_NAME}#'$PROJECT_NAME'#g' service.yaml
+    - envsubst < ${TPL_ApisixRoute} > ApisixRoute.yaml
+    - cat *.yaml | kubectl --kubeconfig=$KUBE_CONFIG_PROD_ACK apply -f -
+  only:
+    - tags
+  when: manual
+  dependencies:
+    - job_package:prodenv

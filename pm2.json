@@ -1,0 +1,21 @@
+{
+  "apps": [
+    {
+      "name": "pdf-render-service",
+      "script": "app.js",
+      "instances": "1",
+      "exec_mode": "cluster",
+      "max_memory_restart": "1G",
+      "autorestart": true,
+      "env_local": {
+        "node_env_type": "local"
+      },
+      "env_dev": {
+        "node_env_type": "dev"
+      },
+      "env_prod": {
+        "node_env_type": "prod"
+      }
+    }
+  ]
+}

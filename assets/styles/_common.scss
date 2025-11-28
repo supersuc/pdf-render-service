@@ -1,0 +1,75 @@
+@import './layout';
+@import './text';
+@import './spacing';
+@import './icon';
+* {
+  box-sizing: border-box;
+}
+a {
+  text-decoration: none;
+}
+body {
+  margin: 0;
+  padding: 0;
+  color: #333333;
+  font-size: 14px;
+  background-color: #F3F6F8;
+  font-weight: 500;
+  font-family: 'PingFang SC';
+}
+h1,h2,h3,h4,h5,h6 {
+  margin: 0;
+  padding: 0;
+}
+.w-card {
+  width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 5px;
+  background-color: #FFF;
+}
+.w-table {
+  border-radius: 5px;
+  border: 1px solid #f2f3f6;
+  table-layout: fixed;
+  border-collapse: collapse;
+  thead {
+    border-radius: 4px 4px 0 0;
+    background: #f8fafc;
+    color: #888888;
+    th {
+      padding: 10px 20px 9px;
+      text-align: left;
+    }
+  }
+  tbody {
+    td {
+      padding: 15px 20px;
+      border-bottom: 1px solid #f2f2f2;
+    }
+  }
+  &--no-border {
+    tbody {
+      td {
+        border-bottom: none;
+      }
+    }
+  }
+}
+.w-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 13px;
+  &--danger {
+    color: #F85B5B;
+    background: #fff3f3;
+  }
+  &--success {
+    color: #06a900;
+    background: #e6f6e6;
+  }
+  &--info {
+    color: #aaa;
+    background: #f7f7f7;
+  }
+}
