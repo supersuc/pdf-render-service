@@ -7,22 +7,12 @@ const fs = require("fs");
 const logger = require("morgan");
 const favicon = require("serve-favicon");
 const cookieParser = require("cookie-parser");
-const { createProxyMiddleware } = require("http-proxy-middleware");
-// const lessMiddleware = require('less-middleware');
-
 const session = require("express-session");
 const RedisStore = require("connect-redis")(session);
-const {
-  project,
-  basePath,
-  redis,
-  proxyTable,
-  inPort,
-} = require("./common/config");
+const { project, basePath, redis, inPort } = require("./common/config");
 const redisOptions = { ...{}, ...redis };
 const cookieSecret = redisOptions.prefix;
 const app = express();
-const upDingDing = require("./libs/dingding");
 
 // 去除express标识
 app.set("x-powered-by", false);
