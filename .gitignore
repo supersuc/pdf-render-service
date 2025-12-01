@@ -23,3 +23,8 @@ Thumbs.db
 # 环境变量
 .env
 .env.local
+
+# PM2
+.pm2/
+pids/
+*.pid

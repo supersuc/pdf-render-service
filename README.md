@@ -118,18 +118,23 @@ simple-pdf-service/
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <title><%= title %></title>
-  <style>
-    body { font-family: Arial; padding: 40px; }
-    h1 { color: #333; }
-  </style>
-</head>
-<body>
-  <h1><%= title %></h1>
-  <p><%= content %></p>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <title><%= title %></title>
+    <style>
+      body {
+        font-family: Arial;
+        padding: 40px;
+      }
+      h1 {
+        color: #333;
+      }
+    </style>
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <p><%= content %></p>
+  </body>
 </html>
 ```
 
@@ -155,12 +160,14 @@ curl -X POST http://localhost:3000/pdf/generate \
 如果系统中已安装 Chrome/Chromium，可以设置环境变量：
 
 **Windows**:
+
 ```cmd
 set CHROMIUM_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe
 npm start
 ```
 
 **Mac/Linux**:
+
 ```bash
 export CHROMIUM_PATH=/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome
 npm start
@@ -175,6 +182,7 @@ npm start
 适用于生成发票、账单等财务文档。
 
 **数据结构**:
+
 ```json
 {
   "invoiceNumber": "发票号",
@@ -199,19 +207,14 @@ npm start
 适用于生成数据报告、统计表格等。
 
 **数据结构**:
+
 ```json
 {
   "title": "报告标题",
   "subtitle": "副标题",
-  "summary": [
-    {"label": "标签", "value": "数值"}
-  ],
-  "columns": [
-    {"key": "字段名", "label": "列名", "align": "left|right"}
-  ],
-  "data": [
-    {"字段名": "值"}
-  ]
+  "summary": [{ "label": "标签", "value": "数值" }],
+  "columns": [{ "key": "字段名", "label": "列名", "align": "left|right" }],
+  "data": [{ "字段名": "值" }]
 }
 ```
 
@@ -220,12 +223,14 @@ npm start
 ### Q: 找不到 Chromium？
 
 **A**: 有两种解决方案：
+
 1. 等待 Puppeteer 自动下载（首次启动会下载）
 2. 设置系统 Chrome 路径（见"配置"章节）
 
 ### Q: 端口被占用？
 
 **A**: 修改 app.js 中的 `PORT` 变量，或使用环境变量：
+
 ```bash
 PORT=3001 npm start
 ```
@@ -233,9 +238,10 @@ PORT=3001 npm start
 ### Q: PDF 中文显示乱码？
 
 **A**: 确保模板中使用中文字体：
+
 ```css
 body {
-  font-family: 'Microsoft YaHei', 'SimHei', Arial, sans-serif;
+  font-family: "Microsoft YaHei", "SimHei", Arial, sans-serif;
 }
 ```
 
@@ -248,39 +254,11 @@ body {
 npm install -g pm2
 
 # 启动服务
-pm2 start app.js --name pdf-service
-
-# 查看日志
-pm2 logs pdf-service
+pm2 start
 
 # 重启服务
-pm2 restart pdf-service
+pm2 restart
 ```
-
-## 📈 性能优化
-
-本服务已内置以下优化：
-
-- ✅ 浏览器实例复用（全局单例）
-- ✅ 自动重启机制（超过 5000 次生成后重启浏览器）
-- ✅ 页面及时关闭（防止内存泄漏）
-- ✅ 优雅关闭（SIGINT 信号处理）
-
-## 📝 开发建议
-
-### 添加新功能
-
-1. **添加水印**: 在模板中添加水印 div
-2. **支持多种格式**: 在 `pdf()` 方法中修改 format 参数
-3. **添加认证**: 在 app.js 中添加认证中间件
-4. **限流**: 可集成 `express-rate-limit`
-
-### 代码改进方向
-
-- [ ] 添加请求日志记录
-- [ ] 实现任务队列（高并发场景）
-- [ ] 添加 PDF 缓存机制
-- [ ] 支持异步生成（Webhook 回调）
 
 ## 🤝 贡献
 
