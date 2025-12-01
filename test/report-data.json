@@ -1,0 +1,65 @@
+{
+  "template": "report",
+  "data": {
+    "title": "2024年第一季度销售报告",
+    "subtitle": "销售部门",
+    "generatedAt": "2024-01-31 18:00:00",
+    "summary": [
+      {
+        "label": "总销售额",
+        "value": "¥1,250,000"
+      },
+      {
+        "label": "新增客户",
+        "value": "156人"
+      },
+      {
+        "label": "订单数量",
+        "value": "458单"
+      },
+      {
+        "label": "客单价",
+        "value": "¥2,730"
+      }
+    ],
+    "columns": [
+      { "key": "date", "label": "日期" },
+      { "key": "customer", "label": "客户" },
+      { "key": "product", "label": "产品" },
+      { "key": "amount", "label": "金额", "align": "right" }
+    ],
+    "data": [
+      {
+        "date": "2024-01-05",
+        "customer": "北京科技公司",
+        "product": "企业版License",
+        "amount": "¥50,000"
+      },
+      {
+        "date": "2024-01-12",
+        "customer": "上海创业公司",
+        "product": "专业版服务",
+        "amount": "¥25,000"
+      },
+      {
+        "date": "2024-01-18",
+        "customer": "深圳互联网",
+        "product": "定制开发",
+        "amount": "¥120,000"
+      },
+      {
+        "date": "2024-01-25",
+        "customer": "广州传媒",
+        "product": "基础版",
+        "amount": "¥8,000"
+      },
+      {
+        "date": "2024-01-28",
+        "customer": "杭州电商",
+        "product": "专业版服务",
+        "amount": "¥28,000"
+      }
+    ]
+  }
+}
+
