@@ -1,25 +1,60 @@
 module.exports = {
-  apps: [{
-    name: 'pdf-render-service',
-    script: './app.js',
-    instances: 2,
-    exec_mode: 'cluster',
-    autorestart: true,
-    watch: false,
-    max_memory_restart: '1G',
-    env: {
-      NODE_ENV: 'development',
-      PORT: 3000,
-      CHROMIUM_PATH: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+  apps: [
+    // API 服务
+    {
+      name: 'pdf-api',
+      script: './app.js',
+      instances: 2,
+      exec_mode: 'cluster',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      env: {
+        NODE_ENV: 'development',
+        PORT: 3000,
+        CHROMIUM_PATH: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        REDIS_HOST: 'localhost',
+        REDIS_PORT: 6379,
+      },
+      env_production: {
+        NODE_ENV: 'production',
+        PORT: 3000,
+        CHROMIUM_PATH: process.env.CHROMIUM_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        REDIS_HOST: process.env.REDIS_HOST || 'localhost',
+        REDIS_PORT: process.env.REDIS_PORT || 6379,
+        REDIS_PASSWORD: process.env.REDIS_PASSWORD || '',
+      },
+      error_file: './logs/api-err.log',
+      out_file: './logs/api-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss',
+      merge_logs: true,
     },
-    env_production: {
-      NODE_ENV: 'production',
-      PORT: 3000,
-      CHROMIUM_PATH: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+    // Worker 服务（消费队列）
+    {
+      name: 'pdf-worker',
+      script: './workers/pdf-worker.js',
+      instances: 2,
+      exec_mode: 'cluster',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      env: {
+        NODE_ENV: 'development',
+        CHROMIUM_PATH: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        REDIS_HOST: 'localhost',
+        REDIS_PORT: 6379,
+      },
+      env_production: {
+        NODE_ENV: 'production',
+        CHROMIUM_PATH: process.env.CHROMIUM_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        REDIS_HOST: process.env.REDIS_HOST || 'localhost',
+        REDIS_PORT: process.env.REDIS_PORT || 6379,
+        REDIS_PASSWORD: process.env.REDIS_PASSWORD || '',
+      },
+      error_file: './logs/worker-err.log',
+      out_file: './logs/worker-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss',
+      merge_logs: true,
     },
-    error_file: './logs/err.log',
-    out_file: './logs/out.log',
-    log_date_format: 'YYYY-MM-DD HH:mm:ss',
-    merge_logs: true
-  }]
+  ],
 };

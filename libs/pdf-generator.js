@@ -79,6 +79,17 @@ async function restartBrowser() {
 }
 
 /**
+ * 关闭浏览器
+ */
+async function closeBrowser() {
+  if (browser) {
+    await browser.close();
+    browser = null;
+    console.log("✅ 浏览器已关闭");
+  }
+}
+
+/**
  * 生成 PDF
  * @param {Object} options - 生成选项
  * @param {string} options.template - 模板名称（不含.html）
@@ -202,17 +213,6 @@ async function renderHTML(options) {
   } catch (error) {
     console.error("❌ 渲染模板失败:", error);
     throw error;
-  }
-}
-
-/**
- * 关闭浏览器
- */
-async function closeBrowser() {
-  if (browser) {
-    await browser.close();
-    browser = null;
-    console.log("✅ 浏览器已关闭");
   }
 }
 
