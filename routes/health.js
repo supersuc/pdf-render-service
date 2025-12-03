@@ -12,8 +12,8 @@ router.get('/', (req, res) => {
     status: 'ok',
     uptime: `${Math.floor(uptime)}秒`,
     memory: {
-      rss: `${Math.round(memory.rss / 1024 / 1024)}MB`,
-      heapUsed: `${Math.round(memory.heapUsed / 1024 / 1024)}MB`
+      rss: `${Math.round(memory.rss / 1024 / 1024)}MB`,        // 总内存
+      heapUsed: `${Math.round(memory.heapUsed / 1024 / 1024)}MB` // 堆内存
     },
     timestamp: new Date().toISOString()
   });

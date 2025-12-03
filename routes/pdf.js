@@ -184,6 +184,19 @@ router.post('/generate-async', async (req, res) => {
       });
     }
     
+    // 检查 Redis 连接状态
+    const queueHealth = await checkQueueHealth();
+    if (!queueHealth.healthy || !queueHealth.redisConnected) {
+      return res.status(503).json({
+        success: false,
+        error: 'REDIS_UNAVAILABLE',
+        message: 'Redis 队列服务不可用',
+        details: queueHealth.error || 'Redis 未连接',
+        tip: '请检查 Redis 服务是否运行: redis-cli ping',
+        fallback: '可以使用同步接口: POST /pdf/generate'
+      });
+    }
+    
     // 生成任务 ID
     const taskId = `pdf-${Date.now()}-${uuidv4().slice(0, 8)}`;
     
@@ -220,6 +233,18 @@ router.post('/generate-async', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ 添加任务失败:', error);
+    
+    // Redis 连接错误
+    if (error.code === 'ECONNREFUSED' || error.message.includes('ECONNREFUSED')) {
+      return res.status(503).json({
+        success: false,
+        error: 'REDIS_CONNECTION_ERROR',
+        message: '无法连接到 Redis 服务',
+        tip: '请检查 Redis 是否启动: redis-server',
+        fallback: '可以使用同步接口: POST /pdf/generate'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: 'QUEUE_ERROR',
